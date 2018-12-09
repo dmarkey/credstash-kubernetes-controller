@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1 # for versions before 1.8.0 use apps/v1beta1
+kind: Deployment
+metadata:
+  name: samplecontroller
+  labels:
+    app: samplecontroller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: samplecontroller
+  strategy:
+   rollingUpdate:
+     maxSurge: 1
+     maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: samplecontroller
+    spec:
+      serviceAccount: samplecontroller
+      containers:
+      - name: samplecontroller
+        image: controller:latest
+        imagePullPolicy: Never
