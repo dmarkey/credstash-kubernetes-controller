@@ -5,6 +5,7 @@ metadata:
   labels:
     k8s-app: credstash-controller
   name: credstash-controller
+  namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -31,6 +32,8 @@ rules:
   - create
   - update
   - delete
+  - get
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -43,4 +46,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: credstash-controller
-    namespace: default
+    namespace: kube-system
