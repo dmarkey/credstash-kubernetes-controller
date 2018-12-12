@@ -13,12 +13,12 @@ api_version = "v1"
 
 class CredStashController:
     def __init__(
-            self,
-            access_key_id,
-            secret_access_key,
-            default_region,
-            default_table,
-            namespaces,
+        self,
+        access_key_id,
+        secret_access_key,
+        default_region,
+        default_table,
+        namespaces,
     ):
 
         self.access_key_id = access_key_id
@@ -55,13 +55,15 @@ class CredStashController:
                     "namespace": namespace,
                     "annotations": {"credstash-fully-managed": "true"},
                 }
-                secret_obj = client.V1Secret(api_version, {}, "Secret",
-                                             metadata)
+                secret_obj = client.V1Secret(
+                    api_version, {}, "Secret", metadata
+                )
             if (
-                    new
-                    or secret_obj.metadata.annotations.get(
-                "credstash-fully-managed", None)
-                    == "true"
+                new
+                or secret_obj.metadata.annotations.get(
+                    "credstash-fully-managed", None
+                )
+                == "true"
             ):
                 secret_obj.data = {}
             for secret_to_process in keys:
@@ -79,9 +81,8 @@ class CredStashController:
                         region=self.default_region,
                     )
                     secret_obj.data[
-                        secret_to_process["key"]] = base64.b64encode(
-                        raw_secret.encode()
-                    ).decode()
+                        secret_to_process["key"]
+                    ] = base64.b64encode(raw_secret.encode()).decode()
                 except ClientError:
                     traceback.print_exc()
                     print("ERROR: Error fetching secret, bailing out!")
@@ -90,22 +91,24 @@ class CredStashController:
                     print(
                         "ERROR: {} version {} not found, bailing out!".format(
                             secret_to_process["from"],
-                            secret_to_process["version"]
+                            secret_to_process["version"],
                         )
                     )
                     return
                 except KeyError as e:
                     print(
                         "{} is missing for this secret, bailing out!".format(
-                            e.args[0])
+                            e.args[0]
+                        )
                     )
                     return
 
             if new:
                 self.v1core.create_namespaced_secret(namespace, secret_obj)
             else:
-                self.v1core.patch_namespaced_secret(secret, namespace,
-                                                    secret_obj)
+                self.v1core.patch_namespaced_secret(
+                    secret, namespace, secret_obj
+                )
 
     def process_event(self, event):
         print("Event received.")
@@ -117,8 +120,8 @@ class CredStashController:
         namespace = obj["metadata"]["namespace"]
         if self.namespaces is not None and namespace not in self.namespaces:
             print(
-                "Secret requested from an "
-                "unauthorized namespace, skipping.")
+                "Secret requested from an " "unauthorized namespace, skipping."
+            )
             return
         metadata = obj.get("metadata")
 
@@ -134,8 +137,10 @@ class CredStashController:
         print("Waiting for credstash secrets to be defined...")
         while True:
             stream = watch.Watch().stream(
-                self.crds.list_cluster_custom_object, DOMAIN, "v1",
-                "credstashsecrets"
+                self.crds.list_cluster_custom_object,
+                DOMAIN,
+                "v1",
+                "credstashsecrets",
             )
             for event in stream:
                 self.process_event(event)
@@ -149,21 +154,25 @@ class CredStashController:
 
         for secret, keys in spec.items():
             secret_obj = self.v1core.read_namespaced_secret(
-                secret,
-                namespace=namespace)
+                secret, namespace=namespace
+            )
 
-            if (secret_obj.metadata.annotations.get("credstash-fully-managed",
-                                                    None) == "true"
-                ):
-                print(
-                    "{} is managed by credstash, deleting it".format(secret))
+            if (
+                secret_obj.metadata.annotations.get(
+                    "credstash-fully-managed", None
+                )
+                == "true"
+            ):
+                print("{} is managed by credstash, deleting it".format(secret))
                 self.v1core.delete_namespaced_secret(
                     secret, namespace, V1DeleteOptions()
                 )
             else:
                 print(
                     "{} is NOT managed by credstash, NOT deleting it".format(
-                        secret))
+                        secret
+                    )
+                )
 
 
 if __name__ == "__main__":
@@ -175,8 +184,9 @@ if __name__ == "__main__":
     main_access_key_id = os.environ["CREDSTASH_AWS_ACCESS_KEY_ID"]
     main_secret_access_key = os.environ["CREDSTASH_AWS_SECRET_ACCESS_KEY"]
     main_default_region = os.environ["CREDSTASH_AWS_DEFAULT_REGION"]
-    main_default_table = os.environ.get("CREDSTASH_DEFAULT_TABLE",
-                                        "credential-store")
+    main_default_table = os.environ.get(
+        "CREDSTASH_DEFAULT_TABLE", "credential-store"
+    )
     main_namespaces = os.environ.get("namespaces", "*")
 
     credstash_controller = CredStashController(
