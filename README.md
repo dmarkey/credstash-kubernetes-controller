@@ -1,4 +1,4 @@
-## A kubernetes controller that pulls secretsa out of credstash based on a CRD
+## A kubernetes controller that pulls secrets out of credstash based on a CRD
 
 More details to follow
 
