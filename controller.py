@@ -4,7 +4,7 @@ import os
 import traceback
 from botocore.exceptions import ClientError
 from kubernetes import client, config, watch
-from kubernetes.client import V1DeleteOptions
+from kubernetes.client import V1DeleteOptions, V1ObjectMeta
 from kubernetes.client.rest import ApiException
 
 DOMAIN = "credstash.local"
@@ -36,9 +36,12 @@ class CredStashController:
         self.crds = client.CustomObjectsApi(api_client)
 
     def update_secret(self, credstash_secret):
-
-        namespace = credstash_secret["metadata"]["namespace"]
-        spec = credstash_secret["spec"]
+        try:
+            namespace = credstash_secret["metadata"]["namespace"]
+            spec = credstash_secret["spec"]
+        except KeyError:
+            print("Missing standard metadata, bailing out!")
+            return
 
         for secret, keys in spec.items():
             new = True
@@ -50,11 +53,11 @@ class CredStashController:
             except ApiException as e:
                 if e.status != 404:
                     raise
-                metadata = {
-                    "name": secret,
-                    "namespace": namespace,
-                    "annotations": {"credstash-fully-managed": "true"},
-                }
+                metadata = V1ObjectMeta(
+                    name=secret,
+                    namespace=namespace,
+                    annotations={"credstash-fully-managed": "true"},
+                )
                 secret_obj = client.V1Secret(
                     api_version, {}, "Secret", metadata
                 )
