@@ -18,12 +18,21 @@ def test_update_secret_empty():
 def test_update_secret_empty_spec():
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
-    cont.v1core.read_namespaced_secret = MagicMock(side_effect=ApiException(status=404))
-    credstash_secret = {"metadata": {"namespace": "test", "name": "boom"}, "spec": {}}
+    cont.v1core.read_namespaced_secret = MagicMock(
+        side_effect=ApiException(status=404)
+    )
+    credstash_secret = {
+        "metadata": {"namespace": "test", "name": "boom"},
+        "spec": {},
+    }
     cont.update_secret(credstash_secret)
 
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][1].to_dict() == {
+    assert (
+        cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
+    )
+    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][
+        1
+    ].to_dict() == {
         "api_version": "v1",
         "data": {},
         "kind": "Secret",
@@ -66,15 +75,21 @@ def test_update_secret_invalid_keys():
 def test_update_secret_valid_key(credstash_get_secret_mock):
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
-    cont.v1core.read_namespaced_secret = MagicMock(side_effect=ApiException(status=404))
+    cont.v1core.read_namespaced_secret = MagicMock(
+        side_effect=ApiException(status=404)
+    )
     credstash_secret = {
         "metadata": {"namespace": "test", "name": "boom"},
-        "spec": [{"name": "ba", "key": "lala", "version": "0001"}],
+        "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
     }
     cont.update_secret(credstash_secret)
 
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][1].to_dict() == {
+    assert (
+        cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
+    )
+    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][
+        1
+    ].to_dict() == {
         "api_version": "v1",
         "data": {"lala": "MTIz"},
         "kind": "Secret",
@@ -114,17 +129,28 @@ def test_update_secret_valid_key(credstash_get_secret_mock):
 def test_update_secret_valid_key_different_table(credstash_get_secret_mock):
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
-    cont.v1core.read_namespaced_secret = MagicMock(side_effect=ApiException(status=404))
+    cont.v1core.read_namespaced_secret = MagicMock(
+        side_effect=ApiException(status=404)
+    )
     credstash_secret = {
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": [
-            {"name": "ba", "key": "lala", "version": "0001", "table": "development"}
+            {
+                "from": "ba",
+                "name": "lala",
+                "version": "0001",
+                "table": "development",
+            }
         ],
     }
     cont.update_secret(credstash_secret)
 
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][1].to_dict() == {
+    assert (
+        cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
+    )
+    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][
+        1
+    ].to_dict() == {
         "api_version": "v1",
         "data": {"lala": "MTIz"},
         "kind": "Secret",
@@ -164,18 +190,24 @@ def test_update_secret_valid_key_different_table(credstash_get_secret_mock):
 def test_update_secret_valid_key_multiple(credstash_get_secret_mock):
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
-    cont.v1core.read_namespaced_secret = MagicMock(side_effect=ApiException(status=404))
+    cont.v1core.read_namespaced_secret = MagicMock(
+        side_effect=ApiException(status=404)
+    )
     credstash_secret = {
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": [
-            {"name": "ba", "key": "lala", "version": "0001"},
-            {"name": "bo", "key": "lala2", "version": "0001"},
+            {"from": "ba", "name": "lala", "version": "0001"},
+            {"from": "bo", "name": "lala2", "version": "0001"},
         ],
     }
     cont.update_secret(credstash_secret)
 
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
-    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][1].to_dict() == {
+    assert (
+        cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
+    )
+    assert cont.v1core.create_namespaced_secret.call_args_list[0][0][
+        1
+    ].to_dict() == {
         "api_version": "v1",
         "data": {"lala": "MTIz", "lala2": "MTIz"},
         "kind": "Secret",
@@ -225,12 +257,16 @@ def test_update_secret_valid_key_existing(credstash_get_secret_mock):
     cont.v1core.read_namespaced_secret = MagicMock(return_value=mock_secret)
     credstash_secret = {
         "metadata": {"namespace": "test", "name": "boom"},
-        "spec": [{"name": "ba", "key": "lala", "version": "0001"}],
+        "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
     }
     cont.update_secret(credstash_secret)
 
-    assert cont.v1core.patch_namespaced_secret.call_args_list[0][0][0] == "boom"
-    assert cont.v1core.patch_namespaced_secret.call_args_list[0][0][2].to_dict() == {
+    assert (
+        cont.v1core.patch_namespaced_secret.call_args_list[0][0][0] == "boom"
+    )
+    assert cont.v1core.patch_namespaced_secret.call_args_list[0][0][
+        2
+    ].to_dict() == {
         "api_version": "v1",
         "data": {"lala": "MTIz"},
         "kind": "Secret",
@@ -267,7 +303,9 @@ def test_update_secret_valid_key_existing(credstash_get_secret_mock):
 
 
 @patch("controller.credstash.getSecret", return_value="123")
-def test_update_secret_valid_key_existing_not_managed(credstash_get_secret_mock):
+def test_update_secret_valid_key_existing_not_managed(
+    credstash_get_secret_mock
+):
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
     metadata = V1ObjectMeta(
@@ -280,12 +318,16 @@ def test_update_secret_valid_key_existing_not_managed(credstash_get_secret_mock)
     cont.v1core.read_namespaced_secret = MagicMock(return_value=mock_secret)
     credstash_secret = {
         "metadata": {"namespace": "test", "name": "boom"},
-        "spec": [{"name": "ba", "key": "lala", "version": "0001"}],
+        "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
     }
     cont.update_secret(credstash_secret)
 
-    assert cont.v1core.patch_namespaced_secret.call_args_list[0][0][0] == "boom"
-    assert cont.v1core.patch_namespaced_secret.call_args_list[0][0][2].to_dict() == {
+    assert (
+        cont.v1core.patch_namespaced_secret.call_args_list[0][0][0] == "boom"
+    )
+    assert cont.v1core.patch_namespaced_secret.call_args_list[0][0][
+        2
+    ].to_dict() == {
         "api_version": "v1",
         "data": {"lala": "MTIz", "secret": "poo"},
         "kind": "Secret",
@@ -332,7 +374,10 @@ def test_delete_secret_empty():
 def test_delete_secret_not_managed():
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
-    credstash_secret = {"metadata": {"namespace": "test", "name": "boom"}, "spec": []}
+    credstash_secret = {
+        "metadata": {"namespace": "test", "name": "boom"},
+        "spec": [],
+    }
     cont.delete_secret(credstash_secret)
     cont.v1core.delete_secret.assert_not_called()
 
@@ -340,7 +385,10 @@ def test_delete_secret_not_managed():
 def test_delete_secret():
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
-    credstash_secret = {"metadata": {"namespace": "test", "name": "boom"}, "spec": []}
+    credstash_secret = {
+        "metadata": {"namespace": "test", "name": "boom"},
+        "spec": [],
+    }
 
     metadata = MagicMock()
     metadata.annotations = {"credstash-fully-managed": "true"}
@@ -373,7 +421,10 @@ def test_process_event_no_spec():
     controller = CredStashController("none", "none", "none", "none", "none")
 
     event = {
-        "object": {"spec": {}, "metadata": {"namespace": "boom", "name": "boom"}},
+        "object": {
+            "spec": {},
+            "metadata": {"namespace": "boom", "name": "boom"},
+        },
         "type": "DELETED",
     }
     controller.delete_secret = MagicMock()
@@ -385,7 +436,10 @@ def test_process_event_delete():
     controller = CredStashController("none", "none", "none", "none", "boom")
 
     event = {
-        "object": {"spec": {"boom"}, "metadata": {"namespace": "boom", "name": "test"}},
+        "object": {
+            "spec": {"boom"},
+            "metadata": {"namespace": "boom", "name": "test"},
+        },
         "type": "DELETED",
     }
     controller.delete_secret = MagicMock()
@@ -397,7 +451,10 @@ def test_process_event_delete_wildcard_ns():
     controller = CredStashController("none", "none", "none", "none", "*")
 
     event = {
-        "object": {"spec": {"boom"}, "metadata": {"namespace": "boom", "name": "test"}},
+        "object": {
+            "spec": {"boom"},
+            "metadata": {"namespace": "boom", "name": "test"},
+        },
         "type": "DELETED",
     }
     controller.delete_secret = MagicMock()
@@ -409,7 +466,10 @@ def test_process_event_modified():
     controller = CredStashController("none", "none", "none", "none", "boom")
 
     event = {
-        "object": {"spec": {"boom"}, "metadata": {"namespace": "boom", "name": "test"}},
+        "object": {
+            "spec": {"boom"},
+            "metadata": {"namespace": "boom", "name": "test"},
+        },
         "type": "MODIFIED",
     }
     controller.update_secret = MagicMock()
@@ -421,7 +481,10 @@ def test_process_event_created():
     controller = CredStashController("none", "none", "none", "none", "boom")
 
     event = {
-        "object": {"spec": {"boom"}, "metadata": {"namespace": "boom", "name": "test"}},
+        "object": {
+            "spec": {"boom"},
+            "metadata": {"namespace": "boom", "name": "test"},
+        },
         "type": "ADDED",
     }
     controller.update_secret = MagicMock()
