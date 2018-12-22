@@ -7,6 +7,8 @@ python:
 script:
 - set -e
 - pytest
+- sudo apt install --yes snapd
+- sudo snap install microk8s --classic
 - make image
 - make push-image
 - make integration-test
