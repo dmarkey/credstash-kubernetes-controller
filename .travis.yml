@@ -10,6 +10,7 @@ script:
 - pytest
 - sudo apt install --yes snapd
 - sudo snap install microk8s --classic
+- export PATH=/snap/bin:$PATH
 - microk8s.status --wait-ready
 - snap alias microk8s.kubectl kubectl
 - kubectl get pods --all-namespaces
