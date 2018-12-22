@@ -7,7 +7,7 @@ image:
 	docker build -t $(IMAGE) .
 
 push-image:
-	docker push $(IMAGE)
+	 [[ ! -z "$$TRAVIS_TAG" ]] && echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
 
 
 .PHONY: image push-image test
