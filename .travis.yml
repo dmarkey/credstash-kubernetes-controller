@@ -8,10 +8,11 @@ python:
 script:
 - set -e
 - pytest
-- snap alias microk8s.kubectl kubectl
 - sudo apt install --yes snapd
 - sudo snap install microk8s --classic
 - microk8s.status --wait-ready
+- snap alias microk8s.kubectl kubectl
+- kubectl get pods --all-namespaces
 - make image
 - make push-image
 - make integration-test
