@@ -1,8 +1,13 @@
 services:
-  - docker
+- docker
 language: python
 python:
 - '3.5'
+before_install:
+- echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 script:
 - pytest
 - make image
+env:
+  docker_hub_password:
+    secure: M9q37KqdotcyQmP+99Rox0HlpDMSd3duOfAAgW9Oz8jwPR51/vAqkIFs14E2FTAXjwbYOnquaaTJT5RAosphfGIPjvPFK4Hr8sKc4hwWuwijDvAovnZf/B8iKfjehgJIs01SzRC/p6tMGdLFzmZV8DahQLFukGpx96uiyJ3JE/gQsogiuu3iZTWddD+pmutizcHqXWBM3aN1/4LKNER/hRBK/BWt5/b5tWSMmHQrzHRZcJmOoQNHIp+gAxmeJi6AejCpWXn1t4LQ7pvVb7O6EysjNNwMu99UmEB8lVmtNq/BskpoGjX6KW+0om0DJxOrhSD/1g6YZy3tTbI6Eb9PQTbeAW9+jsH4ZM3PMbwSrwfoJrgWr1Pkj+aXO3RFwK57nTwnYfwl37nTilxsWIaz8/eULaZiaoMguU7nfBcM1hRUOZjTw0VhKq7i2/yAWpHfw/UGCDYJf3F0e8OB27DXaxgvWQGlGpjV5NIMXG87ohVfMyVGTH+2HFFxs4gIt/sKP/vjm20xNwDWRFnnI9DWGTAoZxf8EntptJ8n0Wtft3qxyCtVmkqCR//+T8+yC6/R2men1WDWUHsSgfHIBw6AKby9tjB1paLhWJhNe/u169Edr15miZtrBKrhiDZ0jL2WJWRI0JaUbxI9LJZHb+NMAVyeKUKBJKDRa5ea2yxEAok=
