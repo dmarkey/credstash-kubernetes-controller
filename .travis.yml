@@ -1,5 +1,6 @@
-services:
-- docker
+addons:
+  apt:
+    update: true
 sudo: required
 language: python
 python:
@@ -7,9 +8,10 @@ python:
 script:
 - set -e
 - pytest
-- sudo apt-get update
+- snap alias microk8s.kubectl kubectl
 - sudo apt install --yes snapd
 - sudo snap install microk8s --classic
+- microk8s.status --wait-ready
 - make image
 - make push-image
 - make integration-test
