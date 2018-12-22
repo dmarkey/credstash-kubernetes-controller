@@ -4,9 +4,9 @@ language: python
 python:
 - '3.5'
 script:
+- set -e
 - pytest
 - make image
-- make upload
 - make push-image
 env:
   global:
