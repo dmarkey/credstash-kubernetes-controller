@@ -16,7 +16,7 @@ I seen the way https://github.com/bitnami-labs/sealed-secrets was implemented an
 
 ## How does it work?
 
-The controller is installed in the cluster and it has the AWS credentials to access your credstash, it watches for CresStashSecret resources to be created. It then fetches the requested secrets out of CredStash and creates the correct Kubernetes secret.
+The controller is installed in the cluster and it has the AWS credentials to access your credstash, it watches for CredstashSecret resources to be created. It then fetches the requested secrets out of CredStash and creates the correct Kubernetes secret.
 
 ## Usage
 
