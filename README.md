@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/dmarkey/credstash-kubernetes-controller.svg?branch=master)](https://travis-ci.org/dmarkey/credstash-kubernetes-controller)
 
+*This is still a very early project so may not be stable and probably has bugs.*
+
 
 ## What does it do?
 It allows users of kubernetes to use credstash in a more declarative way, but without having to commit your secrets to git (bad!).
@@ -38,3 +40,8 @@ If you delete the entire object the corresponding secret will be deleted as well
 ## Security concerns.
 By default the controller will accept requests from all namespaces. If the cluster is multi-tenent this may not be acceptable. To tell the contreoller to only accept requests from specific namespaces set the `namespaces` environment variable to a comma seperated list of namespaces and requests from other namespaces will be ignored.
 
+## Troubleshooting
+
+My secret never get created, what gives?
+
+Check that the credstash-controller pod isnt crashing and check its log output with `kubectl logs <pod name> -n kube-system`
