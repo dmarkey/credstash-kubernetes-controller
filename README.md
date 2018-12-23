@@ -36,5 +36,5 @@ If you delete a secret in the CredStashSecret definition is will be deleted in t
 If you delete the entire object the corresponding secret will be deleted as well.
 
 ## Security concerns.
-By default the controller will accept requests from all namespaces. If the cluster is multi-tenent this may not be acceptable. To tell the contreoller to only accept requests from specific namespaces set the `namespaces` environment variable to a comma seperated list of namespacea and requests from other namespaces will be ignored.
+By default the controller will accept requests from all namespaces. If the cluster is multi-tenent this may not be acceptable. To tell the contreoller to only accept requests from specific namespaces set the `namespaces` environment variable to a comma seperated list of namespaces and requests from other namespaces will be ignored.
 
