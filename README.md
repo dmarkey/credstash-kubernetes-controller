@@ -22,7 +22,7 @@ The controller is installed in the cluster and it has the AWS credentials to acc
 
 Download all the manifests out of the "yaml" directory. Prepare your AWS KEY ID and SECRET KEY by base64'ing them using something like `echo -n $AWS_ACCESS_KEY_ID | base64`  and adding them to `aws-secrets.yaml`. Do that for the `CREDSTASH_AWS_ACCESS_KEY_ID`, `CREDSTASH_AWS_SECRET_ACCESS_KEY` and `CREDSTASH_AWS_DEFAULT_REGION`. After that apply all the manifests. you may omit the `sample-css.yaml` as this is just an example.
 
-###Creation of secrets
+### Creation of secrets
 To try it out edit the sample and add a secret definition. The name of the CredStashSecrrt will become the name of the real secret. Add an entry for each secret, with the following:
 
 1. name - Name of the secret as it will be in the real secret
