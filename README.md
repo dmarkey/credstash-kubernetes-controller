@@ -16,14 +16,14 @@ I seen the way https://github.com/bitnami-labs/sealed-secrets was implemented an
 
 ## How does it work?
 
-The controller is installed in the cluster and it has the AWS credentials to access your credstash, it watches for CredstashSecret resources to be created. It then fetches the requested secrets out of CredStash and creates the correct Kubernetes secret.
+The controller is installed in the cluster and it has the AWS credentials to access your credstash, it watches for CredStashSecret resources to be created. It then fetches the requested secrets out of CredStash and creates the correct Kubernetes secret.
 
 ## Usage
 
 Download all the manifests out of the "yaml" directory. Prepare your AWS KEY ID and SECRET KEY by base64'ing them using something like `echo -n $AWS_ACCESS_KEY_ID | base64`  and adding them to `aws-secrets.yaml`. Do that for the `CREDSTASH_AWS_ACCESS_KEY_ID`, `CREDSTASH_AWS_SECRET_ACCESS_KEY` and `CREDSTASH_AWS_DEFAULT_REGION`. After that apply all the manifests. you may omit the `sample-css.yaml` as this is just an example.
 
 ### Creation of secrets
-To try it out edit the sample and add a secret definition. The name of the CredStashSecrrt will become the name of the real secret. Add an entry for each secret, with the following:
+To try it out edit the sample and add a secret definition. The name of the CredStashSecret will become the name of the real secret. Add an entry for each secret, with the following:
 
 1. name - Name of the secret as it will be in the real secret
 2. key: the name of the secret as it is in credstash
@@ -38,10 +38,10 @@ If you delete a secret in the CredStashSecret definition is will be deleted in t
 If you delete the entire object the corresponding secret will be deleted as well.
 
 ## Security concerns.
-By default the controller will accept requests from all namespaces. If the cluster is multi-tenent this may not be acceptable. To tell the contreoller to only accept requests from specific namespaces set the `namespaces` environment variable to a comma seperated list of namespaces and requests from other namespaces will be ignored.
+By default the controller will accept requests from all namespaces. If the cluster is multi-tenent this may not be acceptable. To tell the contreoller to only accept requests from specific namespaces set the `namespaces` environment variable on the deployment to a comma seperated list of namespaces and requests from other namespaces will be ignored.
 
 ## Troubleshooting
 
 My secret never get created, what gives?
 
-Check that the credstash-controller pod isnt crashing and check its log output with `kubectl logs <pod name> -n kube-system`
+Check that the credstash-controller pod isn't crashing and check its log output with `kubectl logs <pod name> -n kube-system`
