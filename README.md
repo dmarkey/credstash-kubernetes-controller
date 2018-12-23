@@ -10,8 +10,7 @@ Instead a controller runs on your kubernetes cluster and watches for Credstash s
 
 ## Why?
 
-I seen the way [Sealed Secrets][1]
-[1]: https://github.com/bitnami-labs/sealed-secrets "Sealed Secrets" was implemented and how it allows secret management with GitOps. Unfortunatley the project I was working on is already using credstash so I decided to have a go a creating a controller that would use parts of the sealed secrets design but use Credstash as the backend.
+I seen the way https://github.com/bitnami-labs/sealed-secrets was implemented and how it allows secret management with GitOps without commiting secrets to git. Unfortunatley the project I was working on is already using credstash so I decided to have a go a creating a controller that would use parts of the sealed secrets design but use Credstash as the backend.
 
 ## How does it work?
 
