@@ -123,6 +123,9 @@ class CredStashController:
         
         obj = event["object"]
         operation = event["type"]
+        if operation == "ERROR":
+            print("Error Received - {}, giving up".format(event))
+            raise Exception("Error event received")
         spec = obj.get("spec")
         if not spec:
             return
