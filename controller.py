@@ -119,7 +119,8 @@ class CredStashController:
             self.v1core.patch_namespaced_secret(name, namespace, secret_obj)
 
     def process_event(self, event):
-        print("Event received.")
+        print("Event received. - {}".format(event["type"]))
+        
         obj = event["object"]
         operation = event["type"]
         spec = obj.get("spec")
