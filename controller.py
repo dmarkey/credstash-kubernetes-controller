@@ -147,23 +147,39 @@ class CredStashController:
     def main_loop(self):
 
         print("Waiting for credstash secrets to be defined...")
+        resource_version = ''
         while True:
+            print("Starting watcher")
             stream = watch.Watch().stream(
                 self.crds.list_cluster_custom_object,
                 DOMAIN,
                 "v1",
                 "credstashsecrets",
+                resource_version=resource_version
             )
             for event in stream:
+                obj = event["object"]
+                spec = obj.get("spec")
+                if not spec:
+                    continue
+                metadata = obj.get("metadata")
+                resource_version = metadata['resourceVersion']
+                print(resource_version)
                 self.process_event(event)
 
     def delete_secret(self, credstash_secret):
         namespace = credstash_secret["metadata"]["namespace"]
         name = credstash_secret["metadata"]["name"]
-
-        secret_obj = self.v1core.read_namespaced_secret(
-            name, namespace=namespace
-        )
+        try:
+            secret_obj = self.v1core.read_namespaced_secret(
+                name, namespace=namespace
+            )
+        except ApiException as e:
+            if e.status != 404:
+                raise
+            else:
+                "Secret already deleted, returning"
+                return
 
         if (
             secret_obj.metadata.annotations.get(
