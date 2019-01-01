@@ -1,6 +1,7 @@
 import base64
 import credstash
 import os
+import re
 import traceback
 from botocore.exceptions import ClientError
 from kubernetes import client, config, watch
@@ -9,6 +10,24 @@ from kubernetes.client.rest import ApiException
 
 DOMAIN = "credstash.local"
 api_version = "v1"
+
+
+def parse_too_old_failure(message):
+
+    regex = r"too old resource version: .* \((.*)\)"
+
+    result = re.search(regex, message)
+    if result is None:
+        return None
+
+    match = result.group(1)
+    if match is None:
+        return None
+
+    try:
+        return int(match)
+    except ValueError:
+        return None
 
 
 class CredStashController:
@@ -120,7 +139,7 @@ class CredStashController:
 
     def process_event(self, event):
         print("Event received. - {}".format(event["type"]))
-        
+
         obj = event["object"]
         operation = event["type"]
         if operation == "ERROR":
@@ -145,26 +164,39 @@ class CredStashController:
             self.delete_secret(obj)
 
     def main_loop(self):
-
-        print("Waiting for credstash secrets to be defined...")
-        resource_version = ''
+        resource_version = ""
         while True:
-            print("Starting watcher")
+            print("Waiting for credstash secrets to be defined...")
+
             stream = watch.Watch().stream(
                 self.crds.list_cluster_custom_object,
                 DOMAIN,
                 "v1",
                 "credstashsecrets",
-                resource_version=resource_version
+                resource_version=resource_version,
             )
+
             for event in stream:
                 obj = event["object"]
-                spec = obj.get("spec")
-                if not spec:
-                    continue
                 metadata = obj.get("metadata")
-                resource_version = metadata['resourceVersion']
-                print(resource_version)
+                spec = obj.get("spec")
+                code = obj.get("code")
+
+                if code == 410:
+                    print("Received HTTP 410, trying to recover")
+                    new_version = parse_too_old_failure(obj.get("message"))
+                    if new_version is None:
+                        resource_version = ""
+                        break
+                    else:
+                        resource_version = new_version
+
+                if not metadata or not spec:
+                    continue
+
+                if metadata["resourceVersion"] is not None:
+                    resource_version = metadata["resourceVersion"]
+
                 self.process_event(event)
 
     def delete_secret(self, credstash_secret):
