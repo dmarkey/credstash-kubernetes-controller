@@ -128,14 +128,24 @@ class CredStashController:
                     name, len(secret_obj.data)
                 )
             )
-            self.v1core.create_namespaced_secret(namespace, secret_obj)
+            try:
+                self.v1core.create_namespaced_secret(namespace, secret_obj)
+            except ApiException as e:
+                print("Problem creating this secret - {}".format(e))
+                return
+
         else:
             print(
                 "Updating secret {} with {} items".format(
                     name, len(secret_obj.data)
                 )
             )
-            self.v1core.patch_namespaced_secret(name, namespace, secret_obj)
+            try:
+                self.v1core.patch_namespaced_secret(
+                    name, namespace, secret_obj)
+            except ApiException as e:
+                print("Problem updating this secret - {}".format(e))
+                return
 
     def process_event(self, event):
         print("Event received. - {}".format(event["type"]))
