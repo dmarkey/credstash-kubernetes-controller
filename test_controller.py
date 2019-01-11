@@ -37,7 +37,10 @@ def test_update_secret_empty_spec():
         "data": {},
         "kind": "Secret",
         "metadata": {
-            "annotations": {"credstash-fully-managed": "true"},
+            "annotations": {
+                "credstash-fully-managed": "true",
+                "credstash-resourceversion": "1",
+            },
             "cluster_name": None,
             "creation_timestamp": None,
             "deletion_grace_period_seconds": None,
@@ -94,7 +97,10 @@ def test_update_secret_valid_key(credstash_get_secret_mock):
         "data": {"lala": "MTIz"},
         "kind": "Secret",
         "metadata": {
-            "annotations": {"credstash-fully-managed": "true"},
+            "annotations": {
+                "credstash-fully-managed": "true",
+                "credstash-resourceversion": "1",
+            },
             "cluster_name": None,
             "creation_timestamp": None,
             "deletion_grace_period_seconds": None,
@@ -155,7 +161,10 @@ def test_update_secret_valid_key_different_table(credstash_get_secret_mock):
         "data": {"lala": "MTIz"},
         "kind": "Secret",
         "metadata": {
-            "annotations": {"credstash-fully-managed": "true"},
+            "annotations": {
+                "credstash-fully-managed": "true",
+                "credstash-resourceversion": "1",
+            },
             "cluster_name": None,
             "creation_timestamp": None,
             "deletion_grace_period_seconds": None,
@@ -200,7 +209,7 @@ def test_update_secret_valid_key_multiple(credstash_get_secret_mock):
             {"from": "bo", "name": "lala2", "version": "0001"},
         ],
     }
-    cont.update_secret(credstash_secret, resource_version=1)
+    cont.update_secret(credstash_secret, resource_version=None)
 
     assert (
         cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
@@ -212,7 +221,10 @@ def test_update_secret_valid_key_multiple(credstash_get_secret_mock):
         "data": {"lala": "MTIz", "lala2": "MTIz"},
         "kind": "Secret",
         "metadata": {
-            "annotations": {"credstash-fully-managed": "true"},
+            "annotations": {
+                "credstash-fully-managed": "true",
+                "credstash-resourceversion": "-1",
+            },
             "cluster_name": None,
             "creation_timestamp": None,
             "deletion_grace_period_seconds": None,

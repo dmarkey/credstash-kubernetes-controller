@@ -75,10 +75,15 @@ class CredStashController:
         except ApiException as e:
             if e.status != 404:
                 raise
+            if resource_version is None:
+                resource_version = -1
             metadata = V1ObjectMeta(
                 name=name,
                 namespace=namespace,
-                annotations={"credstash-fully-managed": "true"},
+                annotations={
+                    "credstash-fully-managed": "true",
+                    "credstash-resourceversion": str(resource_version),
+                },
             )
             secret_obj = client.V1Secret(api_version, {}, "Secret", metadata)
 
