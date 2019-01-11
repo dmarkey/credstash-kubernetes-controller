@@ -1,0 +1,9 @@
+apiVersion: credstash.local/v1
+kind: CredStashSecret
+metadata:
+  name: credstash-sample-secrets
+spec:
+  - name: SAMPLE_CREDSTASH_SECRET
+    key: SAMPLE_SECRET
+    table: sometable
+    version: "0000000000000000001"

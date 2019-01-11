@@ -10,7 +10,7 @@ def test_update_secret_empty():
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
     credstash_secret = {}
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, None)
     cont.v1core.patch_namespaced_secret.assert_not_called()
     cont.v1core.create_namespaced_secret.assert_not_called()
 
@@ -25,7 +25,7 @@ def test_update_secret_empty_spec():
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": {},
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=1)
 
     assert (
         cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
@@ -66,7 +66,7 @@ def test_update_secret_invalid_keys():
         "metadata": {"namespace": "test"},
         "spec": {"boom": [{"boom": "ba"}]},
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=1)
     cont.v1core.patch_namespaced_secret.assert_not_called()
     cont.v1core.create_namespaced_secret.assert_not_called()
 
@@ -82,7 +82,7 @@ def test_update_secret_valid_key(credstash_get_secret_mock):
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=1)
 
     assert (
         cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
@@ -143,7 +143,7 @@ def test_update_secret_valid_key_different_table(credstash_get_secret_mock):
             }
         ],
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=1)
 
     assert (
         cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
@@ -200,7 +200,7 @@ def test_update_secret_valid_key_multiple(credstash_get_secret_mock):
             {"from": "bo", "name": "lala2", "version": "0001"},
         ],
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=1)
 
     assert (
         cont.v1core.create_namespaced_secret.call_args_list[0][0][0] == "test"
@@ -259,7 +259,7 @@ def test_update_secret_valid_key_existing(credstash_get_secret_mock):
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=10)
 
     assert (
         cont.v1core.patch_namespaced_secret.call_args_list[0][0][0] == "boom"
@@ -271,7 +271,10 @@ def test_update_secret_valid_key_existing(credstash_get_secret_mock):
         "data": {"lala": "MTIz"},
         "kind": "Secret",
         "metadata": {
-            "annotations": {"credstash-fully-managed": "true"},
+            "annotations": {
+                "credstash-fully-managed": "true",
+                "credstash-resourceversion": "10",
+            },
             "cluster_name": None,
             "creation_timestamp": None,
             "deletion_grace_period_seconds": None,
@@ -303,6 +306,31 @@ def test_update_secret_valid_key_existing(credstash_get_secret_mock):
 
 
 @patch("controller.credstash.getSecret", return_value="123")
+def test_update_secret_bad_resource_version(credstash_get_secret_mock):
+    cont = CredStashController("none", "none", "none", "none", "none")
+    cont.v1core = MagicMock()
+    metadata = V1ObjectMeta(
+        name="bobo",
+        namespace="default",
+        annotations={
+            "credstash-fully-managed": "true",
+            "credstash-resourceversion": "2",
+        },
+    )
+    mock_secret = V1Secret("v1", {}, "Secret", metadata)
+
+    cont.v1core.read_namespaced_secret = MagicMock(return_value=mock_secret)
+    credstash_secret = {
+        "metadata": {"namespace": "test", "name": "boom"},
+        "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
+    }
+    assert cont.update_secret(credstash_secret, resource_version=1) is None
+    credstash_get_secret_mock.assert_not_called()
+    cont.v1core.patch_namespaced_secret.assert_not_called()
+    cont.v1core.create_namespaced_secret.assert_not_called()
+
+
+@patch("controller.credstash.getSecret", return_value="123")
 def test_update_secret_valid_key_existing_not_managed(
     credstash_get_secret_mock
 ):
@@ -320,7 +348,7 @@ def test_update_secret_valid_key_existing_not_managed(
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
     }
-    cont.update_secret(credstash_secret)
+    cont.update_secret(credstash_secret, resource_version=1)
 
     assert (
         cont.v1core.patch_namespaced_secret.call_args_list[0][0][0] == "boom"
@@ -332,7 +360,10 @@ def test_update_secret_valid_key_existing_not_managed(
         "data": {"lala": "MTIz", "secret": "poo"},
         "kind": "Secret",
         "metadata": {
-            "annotations": {"credstash-fully-managed": "false"},
+            "annotations": {
+                "credstash-fully-managed": "false",
+                "credstash-resourceversion": "1",
+            },
             "cluster_name": None,
             "creation_timestamp": None,
             "deletion_grace_period_seconds": None,
@@ -367,7 +398,7 @@ def test_delete_secret_empty():
     cont = CredStashController("none", "none", "none", "none", "none")
     cont.v1core = MagicMock()
     credstash_secret = {"metadata": {"namespace": "test", "name": "boom"}}
-    cont.delete_secret(credstash_secret)
+    cont.delete_secret(credstash_secret, resource_version=1)
     cont.v1core.delete_secret.assert_not_called()
 
 
@@ -378,7 +409,7 @@ def test_delete_secret_not_managed():
         "metadata": {"namespace": "test", "name": "boom"},
         "spec": [],
     }
-    cont.delete_secret(credstash_secret)
+    cont.delete_secret(credstash_secret, resource_version=1)
     cont.v1core.delete_secret.assert_not_called()
 
 
@@ -396,7 +427,7 @@ def test_delete_secret():
     obj.metadata = metadata
 
     cont.v1core.read_namespaced_secret = MagicMock(return_value=obj)
-    cont.delete_secret(credstash_secret)
+    cont.delete_secret(credstash_secret, resource_version=1)
     cont.v1core.delete_namespaced_secret.assert_called_once_with(
         "boom", "test", V1DeleteOptions()
     )
@@ -444,7 +475,7 @@ def test_process_event_delete():
     }
     controller.delete_secret = MagicMock()
     controller.process_event(event)
-    controller.delete_secret.assert_called_once_with(event["object"])
+    controller.delete_secret.assert_called_once_with(event["object"], None)
 
 
 def test_process_event_delete_wildcard_ns():
@@ -459,7 +490,7 @@ def test_process_event_delete_wildcard_ns():
     }
     controller.delete_secret = MagicMock()
     controller.process_event(event)
-    controller.delete_secret.assert_called_once_with(event["object"])
+    controller.delete_secret.assert_called_once_with(event["object"], None)
 
 
 def test_process_event_modified():
@@ -474,7 +505,7 @@ def test_process_event_modified():
     }
     controller.update_secret = MagicMock()
     controller.process_event(event)
-    controller.update_secret.assert_called_once_with(event["object"])
+    controller.update_secret.assert_called_once_with(event["object"], None)
 
 
 def test_process_event_created():
@@ -489,4 +520,29 @@ def test_process_event_created():
     }
     controller.update_secret = MagicMock()
     controller.process_event(event)
-    controller.update_secret.assert_called_once_with(event["object"])
+    controller.update_secret.assert_called_once_with(event["object"], None)
+
+
+@patch("controller.credstash.getSecret", return_value="123")
+def test_delete_secret_bad_resource_version(credstash_get_secret_mock):
+    cont = CredStashController("none", "none", "none", "none", "none")
+    cont.v1core = MagicMock()
+    metadata = V1ObjectMeta(
+        name="bobo",
+        namespace="default",
+        annotations={
+            "credstash-fully-managed": "true",
+            "credstash-resourceversion": "2",
+        },
+    )
+    mock_secret = V1Secret("v1", {}, "Secret", metadata)
+
+    cont.v1core.read_namespaced_secret = MagicMock(return_value=mock_secret)
+    credstash_secret = {
+        "metadata": {"namespace": "test", "name": "boom"},
+        "spec": [{"from": "ba", "name": "lala", "version": "0001"}],
+    }
+    assert cont.delete_secret(credstash_secret, resource_version=1) is None
+    credstash_get_secret_mock.assert_not_called()
+    cont.v1core.patch_namespaced_secret.assert_not_called()
+    cont.v1core.delete_namespaced_secret.assert_not_called()

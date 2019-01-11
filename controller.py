@@ -1,7 +1,6 @@
 import base64
 import credstash
 import os
-import re
 import traceback
 from botocore.exceptions import ClientError
 from kubernetes import client, config, watch
@@ -12,22 +11,8 @@ DOMAIN = "credstash.local"
 api_version = "v1"
 
 
-def parse_too_old_failure(message):
-
-    regex = r"too old resource version: .* \((.*)\)"
-
-    result = re.search(regex, message)
-    if result is None:
-        return None
-
-    match = result.group(1)
-    if match is None:
-        return None
-
-    try:
-        return int(match)
-    except ValueError:
-        return None
+class ResourceTooOldException(Exception):
+    pass
 
 
 class CredStashController:
@@ -54,7 +39,20 @@ class CredStashController:
         self.v1core = client.CoreV1Api(api_client)
         self.crds = client.CustomObjectsApi(api_client)
 
-    def update_secret(self, credstash_secret):
+    def check_resource_version(self, secret_obj, resource_version):
+        if resource_version is not None:
+            if int(resource_version) <= int(
+                secret_obj.metadata.annotations.get(
+                    "credstash-resourceversion", -1
+                )
+            ):
+                raise ResourceTooOldException()
+            else:
+                secret_obj.metadata.annotations[
+                    "credstash-resourceversion"
+                ] = str(resource_version)
+
+    def update_secret(self, credstash_secret, resource_version):
         try:
             namespace = credstash_secret["metadata"]["namespace"]
             name = credstash_secret["metadata"]["name"]
@@ -69,6 +67,11 @@ class CredStashController:
                 name, namespace=namespace
             )
             new = False
+            try:
+                self.check_resource_version(secret_obj, resource_version)
+            except ResourceTooOldException:
+                print("We've already processed this event, skipping")
+                return
         except ApiException as e:
             if e.status != 404:
                 raise
@@ -78,6 +81,7 @@ class CredStashController:
                 annotations={"credstash-fully-managed": "true"},
             )
             secret_obj = client.V1Secret(api_version, {}, "Secret", metadata)
+
         if (
             new
             or secret_obj.metadata.annotations.get(
@@ -88,10 +92,9 @@ class CredStashController:
             secret_obj.data = {}
         for secret_to_process in spec:
             try:
+                table = self.default_table
                 if "table" in secret_to_process:
                     table = secret_to_process["table"]
-                else:
-                    table = self.default_table
                 raw_secret = credstash.getSecret(
                     name=secret_to_process["from"],
                     table=table,
@@ -124,8 +127,8 @@ class CredStashController:
 
         if new:
             print(
-                "Creating new secret {} with {} items".format(
-                    name, len(secret_obj.data)
+                "Creating new secret {}/{} with {} items".format(
+                    namespace, name, len(secret_obj.data)
                 )
             )
             try:
@@ -136,18 +139,19 @@ class CredStashController:
 
         else:
             print(
-                "Updating secret {} with {} items".format(
-                    name, len(secret_obj.data)
+                "Updating secret {}/{} with {} items".format(
+                    namespace, name, len(secret_obj.data)
                 )
             )
             try:
                 self.v1core.patch_namespaced_secret(
-                    name, namespace, secret_obj)
+                    name, namespace, secret_obj
+                )
             except ApiException as e:
                 print("Problem updating this secret - {}".format(e))
                 return
 
-    def process_event(self, event):
+    def process_event(self, event, resource_version=None):
         print("Event received. - {}".format(event["type"]))
 
         obj = event["object"]
@@ -167,11 +171,11 @@ class CredStashController:
         metadata = obj.get("metadata")
 
         name = metadata["name"]
-        print("Handling %s on %s" % (operation, name))
+        print("Handling %s on %s/%s" % (operation, namespace, name))
         if operation in ("ADDED", "MODIFIED"):
-            self.update_secret(obj)
+            self.update_secret(obj, resource_version)
         if operation == "DELETED":
-            self.delete_secret(obj)
+            self.delete_secret(obj, resource_version)
 
     def main_loop(self):
         resource_version = ""
@@ -193,13 +197,8 @@ class CredStashController:
                 code = obj.get("code")
 
                 if code == 410:
-                    print("Received HTTP 410, trying to recover")
-                    new_version = parse_too_old_failure(obj.get("message"))
-                    if new_version is None:
-                        resource_version = ""
-                        break
-                    else:
-                        resource_version = new_version
+                    print("Received HTTP 410, restarting..")
+                    break
 
                 if not metadata or not spec:
                     continue
@@ -207,15 +206,20 @@ class CredStashController:
                 if metadata["resourceVersion"] is not None:
                     resource_version = metadata["resourceVersion"]
 
-                self.process_event(event)
+                self.process_event(event, resource_version)
 
-    def delete_secret(self, credstash_secret):
+    def delete_secret(self, credstash_secret, resource_version):
         namespace = credstash_secret["metadata"]["namespace"]
         name = credstash_secret["metadata"]["name"]
         try:
             secret_obj = self.v1core.read_namespaced_secret(
                 name, namespace=namespace
             )
+            try:
+                self.check_resource_version(secret_obj, resource_version)
+            except ResourceTooOldException:
+                print("We've already processed this event, skipping")
+                return
         except ApiException as e:
             if e.status != 404:
                 raise
