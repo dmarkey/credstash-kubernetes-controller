@@ -22,7 +22,7 @@ spec:
       serviceAccount: credstash-controller
       containers:
       - name: credstash-controller
-        image: davidjmarkey/credstash-kubernetes-controller:0.5.1
+        image: davidjmarkey/credstash-kubernetes-controller:0.6.2
         imagePullPolicy: Always
         env:
         - name: CREDSTASH_AWS_ACCESS_KEY_ID
