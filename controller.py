@@ -35,8 +35,11 @@ class CredStashController:
             self.namespaces = None
 
     def _init_client(self):
-        configuration = client.Configuration()
-        api_client = client.api_client.ApiClient(configuration=configuration)
+        if "KUBERNETES_PORT" in os.environ:
+            config.load_incluster_config()
+        else:
+            config.load_kube_config()
+        api_client = client.api_client.ApiClient()
         self.v1core = client.CoreV1Api(api_client)
         self.crds = client.CustomObjectsApi(api_client)
 
@@ -184,7 +187,6 @@ class CredStashController:
             self.delete_secret(obj, resource_version)
 
     def main_loop(self):
-        resource_version = ""
         while True:
             print("Waiting for credstash secrets to be defined...")
             self._init_client()
@@ -192,8 +194,7 @@ class CredStashController:
                 self.crds.list_cluster_custom_object,
                 DOMAIN,
                 "v1",
-                "credstashsecrets",
-                resource_version=resource_version,
+                "credstashsecrets"
             )
 
             for event in stream:
@@ -250,10 +251,6 @@ class CredStashController:
 
 
 if __name__ == "__main__":
-    if "KUBERNETES_PORT" in os.environ:
-        config.load_incluster_config()
-    else:
-        config.load_kube_config()
 
     main_access_key_id = os.environ["CREDSTASH_AWS_ACCESS_KEY_ID"]
     main_secret_access_key = os.environ["CREDSTASH_AWS_SECRET_ACCESS_KEY"]
