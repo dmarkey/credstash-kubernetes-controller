@@ -33,8 +33,9 @@ class CredStashController:
             self.namespaces = namespaces.split(",")
         else:
             self.namespaces = None
+
+    def _init_client(self):
         configuration = client.Configuration()
-        configuration.assert_hostname = False
         api_client = client.api_client.ApiClient(configuration=configuration)
         self.v1core = client.CoreV1Api(api_client)
         self.crds = client.CustomObjectsApi(api_client)
@@ -186,7 +187,7 @@ class CredStashController:
         resource_version = ""
         while True:
             print("Waiting for credstash secrets to be defined...")
-
+            self._init_client()
             stream = watch.Watch().stream(
                 self.crds.list_cluster_custom_object,
                 DOMAIN,
